@@ -1,6 +1,6 @@
 {
   "name": "oira666_pi-npm-token",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Load npm publishing credentials from Pi settings for local shell commands.",
   "type": "module",
   "license": "MIT",
@@ -36,7 +36,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "pretest": "npm install --save-dev --ignore-scripts @earendil-works/pi-coding-agent@latest && npm run typecheck",
-    "test": "node --experimental-strip-types --test test/*.test.ts"
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "test:e2e": "node --test test/*.e2e.mjs"
   },
   "dependencies": {
     "ini": "^7.0.0"

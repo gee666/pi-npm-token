@@ -81,11 +81,14 @@ This extension does not forward credentials to SSH hosts. Other extensions contr
 ```bash
 npm install
 npm test
-npm pack --dry-run
+PI_EVERGREEN_PI_BIN=/absolute/path/to/global/pi npm run test:e2e
+npm pack --dry-run --ignore-scripts
 ```
 
 `npm test` first installs the latest stable Pi coding-agent development dependency from npm, runs strict TypeScript checking, and then runs the test suite. Registry access is required for the dependency refresh, which can update `package.json` and `package-lock.json`. Dependency lifecycle scripts are disabled during the refresh. If the update or typecheck fails, tests do not run. `npm run typecheck` checks the currently installed dependencies without refreshing them.
 
 Tests use dummy credentials and local subprocesses. They cover configuration, project trust, private-file handling, npm environment inheritance, lifecycle behavior, and cleanup. They do not contact npm to authenticate or publish a package, and do not prove that a real token has publishing permission.
+
+`npm run test:e2e` requires `PI_EVERGREEN_PI_BIN` pointing to the installed global Pi CLI; it never installs a runtime or skips coverage. It explicitly loads this extension into isolated RPC sessions and uses Pi's real OpenAI-compatible transport against a deterministic loopback SSE server, without model credentials or remote model calls. It verifies actual provider-bound requests and persisted sessions for sentinel-token leaks across tool turns, retries, compaction, credential reload, runtime reload, and session replacement. It also checks trusted/untrusted configuration, error recovery, environment restoration, and temporary-file cleanup. Negative controls exercise both the shell-auth probe and leak detector. Provider/model/reasoning labels honor `PI_EVERGREEN_E2E_PROVIDER`, `PI_EVERGREEN_E2E_MODEL`, and `PI_EVERGREEN_E2E_REASONING` (defaults: `openai`, `gpt-6-luna`, `medium`); these select the isolated test endpoint, not a live service.
 
 Before every release, update the tested-against line at the top of this README to the actual Pi version that passed the checks. Keep the supported Pi peer range in `package.json` accurate, and inspect `npm pack --dry-run --ignore-scripts` to ensure no credentials or temporary files are packaged. The tracked root `AGENTS.md` contains the release instructions and code quality bar.

@@ -106,6 +106,16 @@ test("npm subprocess inherits auth without changing original config, cleanup res
 		}
 		const inherited = await exec(process.execPath, ["-e", "if (process.env.NPM_TOKEN !== 'npm_TEST_TOKEN_NOT_A_REAL_SECRET') process.exit(1)"], { cwd: root, timeout: 5000 });
 		assert.equal(inherited.stdout, "");
+		await settings(path.join(root, "package.json"), { scripts: { "auth-check": "node auth-check.cjs" } });
+		await writeFile(path.join(root, "auth-check.cjs"), `
+const assert = require('node:assert/strict');
+assert.ok(process.env.NPM_TOKEN === 'npm_TEST_TOKEN_NOT_A_REAL_SECRET', 'lifecycle token missing');
+assert.ok(require('node:fs').readFileSync(process.env.npm_config_userconfig, 'utf8').includes('_authToken'));
+console.log('LIFECYCLE_AUTH_OK');
+`);
+		const lifecycle = await exec("npm", ["run", "--silent", "auth-check"], { cwd: root, timeout: 15_000 });
+		assert.equal(lifecycle.stdout.trim(), "LIFECYCLE_AUTH_OK");
+		assert.ok(!lifecycle.stdout.includes(token));
 		assert.equal(await readFile(original, "utf8"), "fetch-retries=0\n");
 	} finally { await active.dispose(); }
 	await active.dispose();
@@ -193,8 +203,10 @@ test("startup and reload are silent, errors notify once, and status line stays u
 		on(name: string, handler: Handler) { handlers.set(name, handler); },
 		registerCommand(_name: string, spec: { handler: typeof command }) { command = spec.handler; },
 	} as unknown as ExtensionAPI;
+	let releaseIdle: (() => void) | undefined;
+	let idle = Promise.resolve();
 	const ctx = {
-		cwd: root, isProjectTrusted: () => true, waitForIdle: async () => {},
+		cwd: root, isProjectTrusted: () => true, waitForIdle: () => idle,
 		ui: { notify(message: string, type?: string) { notices.push({ message, type }); }, setStatus(_key: string, text: string | undefined) { statuses.push(text); } },
 	} as unknown as ExtensionContext;
 	extension(pi);
@@ -204,7 +216,13 @@ test("startup and reload are silent, errors notify once, and status line stays u
 	const first = process.env.npm_config_userconfig!;
 	assert.equal(process.env.NPM_TOKEN, token);
 	await settings(config, { token: "replacement" });
-	await command!("", ctx);
+	idle = new Promise<void>((resolve) => { releaseIdle = resolve; });
+	const reloading = command!("", ctx);
+	await new Promise<void>((resolve) => setImmediate(resolve));
+	assert.equal(process.env.NPM_TOKEN, token, "reload must not change credentials until idle");
+	assert.equal(process.env.npm_config_userconfig, first);
+	releaseIdle!();
+	await reloading;
 	assert.equal(process.env.NPM_TOKEN, "replacement");
 	await assert.rejects(stat(first), { code: "ENOENT" });
 	assert.deepEqual(notices, []);
@@ -214,6 +232,13 @@ test("startup and reload are silent, errors notify once, and status line stays u
 	assert.equal(process.env.NPM_TOKEN, undefined);
 	assert.deepEqual(notices, [{ message: "npm-auth.json is not valid JSON.", type: "error" }]);
 	assert.deepEqual(statuses, []);
+	await settings(config, { token: "recovered" });
+	await command!("", ctx);
+	assert.equal(process.env.NPM_TOKEN, "recovered", "invalid reload must not prevent recovery");
+	await rm(config);
+	await command!("", ctx);
+	assert.equal(process.env.NPM_TOKEN, undefined, "removed settings must release active auth");
+	assert.equal(process.env.NPM_CONFIG_USERCONFIG, path.join(root, "original.npmrc"));
 	await handlers.get("session_shutdown")!({}, ctx);
 	await handlers.get("session_shutdown")!({}, ctx);
 }));
