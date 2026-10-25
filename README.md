@@ -80,8 +80,8 @@ This extension does not forward credentials to SSH hosts. Other extensions contr
 
 ```bash
 npm install
-npm test
-PI_EVERGREEN_PI_BIN=/absolute/path/to/global/pi npm run test:e2e
+EVERGREEN_E2E_MODEL=openai-codex/gpt-6-luna:low npm run test:evergreen
+EVERGREEN_PI_BIN=/absolute/path/to/global/pi EVERGREEN_E2E_MODEL=openai-codex/gpt-6-luna:low npm run test:e2e
 npm pack --dry-run --ignore-scripts
 ```
 
@@ -89,6 +89,8 @@ npm pack --dry-run --ignore-scripts
 
 Tests use dummy credentials and local subprocesses. They cover configuration, project trust, private-file handling, npm environment inheritance, lifecycle behavior, and cleanup. They do not contact npm to authenticate or publish a package, and do not prove that a real token has publishing permission.
 
-`npm run test:e2e` requires `PI_EVERGREEN_PI_BIN` pointing to the installed global Pi CLI; it never installs a runtime or skips coverage. It explicitly loads this extension into isolated RPC sessions and uses Pi's real OpenAI-compatible transport against a deterministic loopback SSE server, without model credentials or remote model calls. It verifies actual provider-bound requests and persisted sessions for sentinel-token leaks across tool turns, retries, compaction, credential reload, runtime reload, and session replacement. It also checks trusted/untrusted configuration, error recovery, environment restoration, and temporary-file cleanup. Negative controls exercise both the shell-auth probe and leak detector. Provider/model/reasoning labels honor `PI_EVERGREEN_E2E_PROVIDER`, `PI_EVERGREEN_E2E_MODEL`, and `PI_EVERGREEN_E2E_REASONING` (defaults: `openai`, `gpt-6-luna`, `medium`); these select the isolated test endpoint, not a live service.
+`npm run test:evergreen` runs unit tests, SDK integration tests, and e2e tests, including the dependency refresh and typecheck above. Integration tests load the real extension through Pi's resource loader and exercise local npm, credential reload, runtime reload, invalid-settings recovery, and settings removal without model calls.
+
+`npm run test:e2e` uses the globally installed CLI from `EVERGREEN_PI_BIN`, falling back to `pi` on PATH, with stdin ignored. Set `EVERGREEN_E2E_MODEL` to a model you can access; these tests make real model calls and require its credentials. Isolated agent directories copy your model login from `auth.json` (then delete it during cleanup); provider environment credentials are also inherited. The test runs real bash/npm probes with dummy npm credentials for trusted, untrusted, and missing configuration. It checks provider-bound payloads, CLI output, and persisted sessions for dummy-token leaks, plus shutdown environment restoration and temporary-file cleanup. It never authenticates to npm or publishes. Retry, compaction, interactive UI, and session replacement are not covered by this suite. See [EVERGREEN.md](EVERGREEN.md) for intent and compatibility watch points.
 
 Before every release, update the tested-against line at the top of this README to the actual Pi version that passed the checks. Keep the supported Pi peer range in `package.json` accurate, and inspect `npm pack --dry-run --ignore-scripts` to ensure no credentials or temporary files are packaged. The tracked root `AGENTS.md` contains the release instructions and code quality bar.

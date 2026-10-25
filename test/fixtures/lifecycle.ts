@@ -12,8 +12,7 @@ export default function observer(pi: ExtensionAPI) {
 	}
 	pi.on("session_start", async (_event, ctx) => record("session_start", ctx));
 	pi.on("session_shutdown", async (_event, ctx) => record("session_shutdown", ctx));
-	pi.registerCommand("evergreen-reload", {
-		description: "Exercise the supported runtime reload API",
-		handler: async (_args, ctx) => { await ctx.reload(); },
+	pi.on("before_provider_request", async (event, ctx) => {
+		await appendFile(path.join(ctx.cwd, "requests.jsonl"), JSON.stringify(event.payload) + "\n");
 	});
 }
