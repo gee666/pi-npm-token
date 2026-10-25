@@ -45,7 +45,7 @@ chmod 600 ~/.pi/agent/npm-auth.json
 
 Open that file in your editor and add the JSON above with your real token. Do not paste the token into chat or put it in a shell command. For project settings, also add `.pi/npm-auth.json` to the project's `.gitignore`. On Windows, restrict access using file permissions.
 
-Run `/reload` or `/npm-token` after saving. The status line shows `npm token ready` when configured. This means the file was loaded, not that npm verified the token.
+Run `/reload` or `/npm-token` after saving. The extension is silent on success and does not add anything to the status line. Errors appear as plain TUI notifications. To verify the token, run `npm whoami`.
 
 Now you or the assistant can run a normal local shell command:
 

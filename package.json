@@ -1,6 +1,6 @@
 {
   "name": "oira666_pi-npm-token",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Load npm publishing credentials from Pi settings for local shell commands.",
   "type": "module",
   "license": "MIT",

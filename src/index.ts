@@ -15,9 +15,7 @@ export default function npmToken(pi: ExtensionAPI) {
 			await cleanup();
 			const settings = await loadSettings(ctx.cwd, getAgentDir(), ctx.isProjectTrusted());
 			if (settings) credentials = await activateCredentials(ctx.cwd, settings);
-			ctx.ui.setStatus("npm-token", credentials ? "npm token ready" : undefined);
 		} catch (error) {
-			ctx.ui.setStatus("npm-token", undefined);
 			ctx.ui.notify(error instanceof Error ? error.message : "Could not configure npm authentication.", "error");
 		}
 	}
@@ -28,11 +26,10 @@ export default function npmToken(pi: ExtensionAPI) {
 		catch { ctx.ui.notify("Could not remove the temporary npm config. Check the project's tmp directory.", "error"); }
 	});
 	pi.registerCommand("npm-token", {
-		description: "Reload npm-auth.json and show whether npm authentication is configured",
+		description: "Reload npm-auth.json silently, reporting only errors",
 		handler: async (_args, ctx) => {
 			await ctx.waitForIdle();
 			await configure(ctx);
-			ctx.ui.notify(credentials ? "npm authentication is ready for local shell commands." : "npm authentication is not configured.", "info");
 		},
 	});
 }

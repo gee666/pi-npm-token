@@ -183,11 +183,11 @@ test("FIFO token and npmrc files are rejected without blocking", { timeout: 5000
 	assert.equal(process.env.NPM_TOKEN, undefined);
 }));
 
-test("session startup, reload command, invalid settings, and shutdown are safe", async () => fixture(async (root, agent) => {
+test("startup and reload are silent, errors notify once, and status line stays untouched", async () => fixture(async (root, agent) => {
 	type Handler = (event: unknown, ctx: ExtensionContext) => unknown;
 	const handlers = new Map<string, Handler>();
 	let command: ((args: string, ctx: ExtensionContext) => Promise<void>) | undefined;
-	const notices: string[] = [];
+	const notices: { message: string; type: string | undefined }[] = [];
 	const statuses: (string | undefined)[] = [];
 	const pi = {
 		on(name: string, handler: Handler) { handlers.set(name, handler); },
@@ -195,7 +195,7 @@ test("session startup, reload command, invalid settings, and shutdown are safe",
 	} as unknown as ExtensionAPI;
 	const ctx = {
 		cwd: root, isProjectTrusted: () => true, waitForIdle: async () => {},
-		ui: { notify(message: string) { notices.push(message); }, setStatus(_key: string, text: string | undefined) { statuses.push(text); } },
+		ui: { notify(message: string, type?: string) { notices.push({ message, type }); }, setStatus(_key: string, text: string | undefined) { statuses.push(text); } },
 	} as unknown as ExtensionContext;
 	extension(pi);
 	const config = path.join(agent, "npm-auth.json");
@@ -207,12 +207,13 @@ test("session startup, reload command, invalid settings, and shutdown are safe",
 	await command!("", ctx);
 	assert.equal(process.env.NPM_TOKEN, "replacement");
 	await assert.rejects(stat(first), { code: "ENOENT" });
+	assert.deepEqual(notices, []);
+	assert.deepEqual(statuses, []);
 	await writeFile(config, `{"token":"${token}", broken}`);
 	await command!("", ctx);
 	assert.equal(process.env.NPM_TOKEN, undefined);
-	assert.ok(notices.some((notice) => notice.includes("not valid JSON")));
-	assert.ok(notices.every((notice) => !notice.includes(token)));
-	assert.equal(statuses.at(-1), undefined);
+	assert.deepEqual(notices, [{ message: "npm-auth.json is not valid JSON.", type: "error" }]);
+	assert.deepEqual(statuses, []);
 	await handlers.get("session_shutdown")!({}, ctx);
 	await handlers.get("session_shutdown")!({}, ctx);
 }));
