@@ -84,4 +84,8 @@ npm test
 npm pack --dry-run
 ```
 
-Tests use dummy credentials and local subprocesses. They do not contact npm to authenticate or publish a package.
+`npm test` first installs the latest stable Pi coding-agent development dependency from npm, runs strict TypeScript checking, and then runs the test suite. Registry access is required for the dependency refresh, which can update `package.json` and `package-lock.json`. Dependency lifecycle scripts are disabled during the refresh. If the update or typecheck fails, tests do not run. `npm run typecheck` checks the currently installed dependencies without refreshing them.
+
+Tests use dummy credentials and local subprocesses. They cover configuration, project trust, private-file handling, npm environment inheritance, lifecycle behavior, and cleanup. They do not contact npm to authenticate or publish a package, and do not prove that a real token has publishing permission.
+
+Before every release, update the tested-against line at the top of this README to the actual Pi version that passed the checks. Keep the supported Pi peer range in `package.json` accurate, and inspect `npm pack --dry-run --ignore-scripts` to ensure no credentials or temporary files are packaged. The tracked root `AGENTS.md` contains the release instructions and code quality bar.

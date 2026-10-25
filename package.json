@@ -25,17 +25,17 @@
     ]
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "^1.4.0"
+    "@earendil-works/pi-coding-agent": ">=1.4.0"
   },
   "devDependencies": {
-    "@earendil-works/pi-coding-agent": "latest",
+    "@earendil-works/pi-coding-agent": "^1.4.0",
     "@types/ini": "^4.1.1",
     "@types/node": "^24.0.0",
     "typescript": "^5.9.3"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "pretest": "npm run typecheck",
+    "pretest": "npm install --save-dev --ignore-scripts @earendil-works/pi-coding-agent@latest && npm run typecheck",
     "test": "node --experimental-strip-types --test test/*.test.ts"
   },
   "dependencies": {
