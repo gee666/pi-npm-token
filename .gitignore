@@ -1,0 +1,6 @@
+node_modules/
+tmp/
+npm-auth.json
+.pi/npm-auth.json
+.npmrc
+*.tgz

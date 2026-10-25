@@ -1,0 +1,44 @@
+{
+  "name": "oira666_pi-npm-token",
+  "version": "0.1.0",
+  "description": "Load npm publishing credentials from Pi settings for local shell commands.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gee666/pi-npm-token.git"
+  },
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "npm",
+    "token"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "^1.4.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "latest",
+    "@types/ini": "^4.1.1",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "pretest": "npm run typecheck",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": {
+    "ini": "^7.0.0"
+  }
+}
