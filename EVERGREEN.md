@@ -31,6 +31,7 @@ Tests additionally use public SDK resource loading, sessions, reload, bash execu
 Authentication lives in process.env and is readable by trusted extensions and child processes.
 Other environment writers must not be overwritten during cleanup; only one active owner is supported.
 Trust decisions and shutdown/reload event ordering must remain compatible with Pi.
+Pi >=1.5.0 is required: earlier hosts ignored saved distrust without trust-requiring resources.
 npm CLI precedence can override auth; project/ancestor userconfig directives are rejected.
 A private, owned, non-symlink project tmp directory is required; forced kills can leave files.
 Copied npmrc settings can contain unrelated credentials and must remain private.
@@ -44,12 +45,13 @@ Integration: test/runtime.integration.ts loads the actual extension in Pi's SDK,
 Pi's shell, and proves command/runtime reload, invalid-settings recovery, and settings removal.
 E2E: test/runtime.e2e.mjs launches EVERGREEN_PI_BIN (or pi on PATH) with stdin ignored.
 EVERGREEN_E2E_MODEL is required and selects real model calls using the caller's model login.
-Real bash/npm probes verify trusted-project precedence, untrusted global fallback, and missing settings.
+Real bash/npm probes verify trusted-project precedence, saved-distrust global fallback without
+trust-requiring resources (AGENTS.md and npm-auth.json only), and missing settings.
 Provider payloads, CLI output, and persisted sessions must not contain dummy credentials.
 Shutdown must restore the environment, remove generated configs, and preserve the original npmrc.
 All npm credentials are fake; no npm authentication or publishing is attempted.
 Not covered: retry/compaction, session replacement, interactive UI, forced-kill cleanup, real publishing policy.
-Tested with global Pi 1.4.0; no lint script is configured.
+Tested with global Pi 1.5.0; no lint script is configured.
 
 ## Relevant changelog topics
 Watch extension loading/package exports, getAgentDir and agent-directory overrides, project trust,

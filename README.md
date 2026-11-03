@@ -1,6 +1,6 @@
 # oira666_pi-npm-token
 
-Tested against Pi 1.4.0
+Tested against Pi 1.5.0
 
 Load an npm token from a settings file so local commands such as `npm publish` work inside Pi. You do not need to export environment variables or change how you launch Pi.
 
@@ -27,7 +27,7 @@ Save the token in either:
 - Global settings: `~/.pi/agent/npm-auth.json`.
 - Project settings: `<project>/.pi/npm-auth.json`.
 
-If Pi uses a custom agent directory, put the global file there instead. A trusted project's settings take precedence over global settings. The files are not merged. Untrusted project settings are ignored.
+If Pi uses a custom agent directory, put the global file there instead. A trusted project's settings take precedence over global settings. The files are not merged. Untrusted project settings are ignored. Requires Pi 1.5.0 or newer so saved “Do not trust” decisions also apply to projects without trust-requiring resources.
 
 ```json
 {

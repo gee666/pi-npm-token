@@ -28,6 +28,9 @@ test("global Pi gives local npm commands trusted auth without adding secrets to 
 		} catch (error) { if (error.code !== "ENOENT") throw error; }
 		await json(path.join(agent, "npm-auth.json"), { token: tokens[0] });
 		await json(path.join(root, ".pi/npm-auth.json"), { token: tokens[1] });
+		// Neither AGENTS.md nor npm-auth.json requires Pi project trust resolution.
+		await writeFile(path.join(root, "AGENTS.md"), "Test project.\n");
+		await json(path.join(agent, "trust.json"), { [root]: false });
 		const original = path.join(root, "original.npmrc");
 		await writeFile(original, "fetch-retries=0\n", { mode: 0o600 });
 		await writeFile(path.join(root, "probe.cjs"), `const fs = require('node:fs');
@@ -44,7 +47,7 @@ if (expected) {
 }
 console.log('AUTH_OK');
 `);
-		for (const [index, trust, expected] of [[0, "--approve", tokens[1]], [1, "--no-approve", tokens[0]], [2, "--no-approve", undefined]]) {
+		for (const [index, trust, expected] of [[0, "--approve", tokens[1]], [1, undefined, tokens[0]], [2, "--no-approve", undefined]]) {
 			if (index === 2) await rm(path.join(agent, "npm-auth.json"));
 			await json(path.join(root, "expected.json"), { token: expected });
 			const sessionDir = path.join(root, `sessions-${index}`);
@@ -53,7 +56,7 @@ console.log('AUTH_OK');
 			delete env.NPM_TOKEN;
 			delete env.npm_config_userconfig;
 			const child = spawn(process.env.EVERGREEN_PI_BIN || "pi", [
-				"--print", "--mode", "json", "--offline", trust,
+				"--print", "--mode", "json", "--offline", ...(trust ? [trust] : []),
 				"--no-extensions", "--no-skills", "--no-prompt-templates", "--no-themes", "--no-context-files", "--no-mcp",
 				"--extension", path.join(repo, "src/index.ts"), "--extension", path.join(repo, "test/fixtures/lifecycle.ts"),
 				"--model", process.env.EVERGREEN_E2E_MODEL, "--tools", "bash", "--session-dir", sessionDir,
